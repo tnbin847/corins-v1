@@ -1,0 +1,127 @@
+#
+# 스프링 프로파일 그룹화
+#
+
+spring:
+  profiles:
+    group:
+      dev: common, dev
+      test: common, test
+
+---
+
+#
+# 공통 환경 설정
+#
+
+spring:
+  config:
+    activate:
+      on-profile:
+        - common
+  # 애플리케이션 명칭 지정
+  application:
+    name: corins-v.1.0
+  main:
+    banner-mode: off  # 서버 런타임시, 콘솔 상에 출력될 배너 끄기
+  # 타임리프 설정 : 브라우저의 새로고침을 통한 화면단 변경 내용 적용을 위한 HTML 경로 변경 및 캐시값 설정
+  thymeleaf:
+    prefix: file:src/main/resources/templates/
+    suffix: .html
+    cache: false
+  # 타임리프 설정 내용과 마찬가지로 브라우저 새로고침을 통한 화면단 변경 내용 적용을 위한 정적 리소스 파일 경로 변경
+  web:
+    resources:
+      static-locations:
+        - file:src/main/resources/static/
+
+# 마이바티스 설정
+mybatis:
+  # 런타임시 마이바티스의 동작 제어를 위한 값 설정
+  configuration:
+    cache-enabled: false
+    local-cache-scope: STATEMENT
+    lazy-loading-enabled: false
+    map-underscore-to-camel-case: true
+    call-setters-on-nulls: true
+    jdbc-type-for-null: NULL
+  # 마이바티스에서 타입 정보 사용시, 명시할 패키지 이름을 생략하기 위한 설정
+  type-aliases-package: com.sukong.corins.domain.**.dto
+  # 별도로 정의한 타입 핸들러 클래스 설정
+  type-handlers-package: com.sukong.corins.global.common.mybatis
+  # 매퍼 XML 파일의 경로 지정
+  mapper-locations:
+    - classpath:mapper/*_mapper.xml
+    - classpath:mapper/**/*_mapper.xml
+
+# 서버 설정 - 내장 톰캣의 포트 번호 변경 및 인코딩 설정
+server:
+  port: 80
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+---
+
+#
+# 로컬 개발 환경에 따른 설정
+#
+
+spring:
+  config:
+    activate:
+      on-profile:
+        - dev
+  datasource:
+    url: jdbc:mariadb://localhost:3306/corins?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: sukong
+    password: bin3718
+    driver-class-name: org.mariadb.jdbc.Driver
+    # Hikari CP 설정
+    hikari:
+      connection-timeout: 3000  # 커넥션 요청 후 얻기 까지 대기 시간 (3000 = 3초)
+      maximum-pool-size: 5  # 히카리 풀(Hikari Pool)에서 관리할 커넥션의 최대 개수
+      minimum-idle: 5 # 커넥션 풀에서 유지할 최소 유휴 커넥션의 최소 개수
+      max-lifetime: 30000   # 최대 얼마동안 커넥션의 연결을 유지할지에 대한 설정
+
+# 로깅 레벨 지정
+logging:
+  level:
+    root: info
+    web: debug
+
+---
+
+#
+# 테스트 환경에 따른 설정
+#
+
+spring:
+  config:
+    activate:
+      on-profile:
+        - test
+  datasource:
+    url: jdbc:h2:mem:test_db;MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      path: /h2-console
+      enabled: true
+  sql:
+    init:
+      schema-locations:
+        - classpath:sql/schema.sql
+      data-locations:
+        - classpath:sql/data.sql
+
+# 로깅 레벨 지정
+logging:
+  level:
+    web: debug
+    root: debug
+    sql: debug
